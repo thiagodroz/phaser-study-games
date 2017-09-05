@@ -16,6 +16,8 @@ var GameState = {
   },
   create: function () {
     this.background = this.game.add.sprite(0, 0, 'backyard');
+    this.background.inputEnabled = true;
+    this.background.events.onInputDown.add(this.placeItem, this);
     
     this.pet = this.game.add.sprite(100, 400, 'pet');
     this.pet.anchor.setTo(0.5);
@@ -23,11 +25,85 @@ var GameState = {
       health: 100,
       fun: 100
     };
+    this.pet.inputEnabled = true;
+    this.pet.input.enableDrag();
     
     this.apple = this.game.add.sprite(72, 570, 'apple');
+    this.apple.anchor.setTo(0.5);
+    this.apple.inputEnabled = true;
+    this.apple.customParams = { health: 20 };
+    this.apple.events.onInputDown.add(this.pickItem, this);
+    
     this.candy = this.game.add.sprite(144, 570, 'candy');
+    this.candy.anchor.setTo(0.5);
+    this.candy.inputEnabled = true;
+    this.candy.customParams = { health: -10, fun: 30 };
+    this.candy.events.onInputDown.add(this.pickItem, this);
+    
     this.toy = this.game.add.sprite(216, 570, 'toy');
+    this.toy.anchor.setTo(0.5);
+    this.toy.inputEnabled = true;
+    this.toy.customParams = { fun: 20 };
+    this.toy.events.onInputDown.add(this.pickItem, this);
+    
     this.rotate = this.game.add.sprite(288, 570, 'rotate');
+    this.rotate.anchor.setTo(0.5);
+    this.rotate.inputEnabled = true;
+    this.rotate.events.onInputDown.add(this.rotatePet, this);
+    
+    this.buttons = [
+      this.apple,
+      this.candy,
+      this.toy,
+      this.rotate
+    ];
+    
+    this.selectedItem = null;
+    this.uiBlocked = false;
+  },
+  pickItem: function (sprite, event) {
+    if (!this.uiBlocked) {
+      this.clearSelection();
+      
+      sprite.alpha = 0.4;
+      
+      this.selectedItem = sprite;
+    }
+  },
+  rotatePet: function (sprite, event) {
+    if (!this.uiBlocked) {
+      this.uiBlocked = true;
+      this.clearSelection();
+      
+      sprite.alpha = 0.4;
+      var petRotation = this.game.add.tween(this.pet);
+      petRotation.to({ angle: '+720' }, 1000);
+      petRotation.onComplete.add(function () {
+        this.uiBlocked = false;
+        
+        sprite.alpha = 1;
+        
+        this.pet.customParams.fun += 20;
+      }, this);
+      petRotation.start();
+    }
+  },
+  clearSelection: function () {
+    this.buttons.forEach(function (element, index) {
+      element.alpha = 1;
+    });
+    
+    this.selectedItem = null;
+  },
+  placeItem: function (background, event) {
+    if (this.selectedItem && !this.uiBlocked) {
+      var x = event.position.x;
+      var y = event.position.y;
+
+      var newItem = this.game.add.sprite(x, y, this.selectedItem.key);
+      newItem.anchor.setTo(0.5);
+      newItem.customParams = this.selectedItem.customParams;
+    }
   }
 };
 
