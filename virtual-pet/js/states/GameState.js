@@ -126,11 +126,12 @@ var GameState = {
         this.uiBlocked = false;
         
         var stat;
-        for (start in newItem.customParams) {
+        for (stat in newItem.customParams) {
           if (newItem.customParams.hasOwnProperty) {
             this.pet.customParams[stat] += newItem.customParams[stat];
           }
         }
+        this.refreshStats();
       }, this);
       
       petMovement.start();
