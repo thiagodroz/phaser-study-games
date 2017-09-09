@@ -44,6 +44,24 @@ var GameState = {
 
       this.platforms.setAll('body.immovable', true);
       this.platforms.setAll('body.allowGravity', false);
+
+      this.fires = this.add.group();
+      this.fires.enableBody = true;
+
+      var fire;
+      this.levelData.fireData.forEach(function (element) {
+        fire = this.fires.create(element.x, element.y, 'fire');
+        fire.animations.add('fire', [0, 1], 4, true);
+        fire.play('fire');
+      }, this);
+
+      this.fires.setAll('body.allowGravity', false);
+
+      this.goal = this.add.sprite(this.levelData.goal.x,
+                                  this.levelData.goal.y,
+                                  'goal');
+      this.game.physics.arcade.enable(this.goal);
+      this.goal.body.allowGravity = false;
       
       this.player = this.add.sprite(
         this.levelData.playerStart.x,
@@ -59,19 +77,41 @@ var GameState = {
       this.game.camera.follow(this.player);
 
       this.createOnScreenControls();
+
+      this.barrels = this.add.group();
+      this.barrels.enableBody = true;
+
+      this.createBarrel();
+      this.barrelsCreator = this.game.time.events.loop(
+        Phaser.Timer.SECOND * this.levelData.barrelFrequency,
+        this.createBarrel, this);
     },
     update: function() {
-      this.game.physics.arcade.collide(this.player, this.ground, this.landed);
-      this.game.physics.arcade.collide(this.player, this.platforms, this.landed);
+      this.game.physics.arcade.collide(this.player, this.ground);
+      this.game.physics.arcade.collide(this.player, this.platforms);
+
+      this.game.physics.arcade.collide(this.barrels, this.ground);
+      this.game.physics.arcade.collide(this.barrels, this.platforms);
+
+      this.game.physics.arcade.overlap(this.player, this.fires, this.killPlayer);
+      this.game.physics.arcade.overlap(this.player, this.barrels, this.killPlayer);
+      this.game.physics.arcade.overlap(this.player, this.goal, this.win);
 
       this.player.body.velocity.x = 0;
 
       if (this.cursors.left.isDown ||
           this.player.customParams.isMovingLeft) {
         this.player.body.velocity.x = -this.RUNNING_SPEED;
+        this.player.play('walking');
+        this.player.scale.setTo(1, 1);
       } else if (this.cursors.right.isDown ||
                  this.player.customParams.isMovingRight) {
         this.player.body.velocity.x = this.RUNNING_SPEED;
+        this.player.scale.setTo(-1, 1);
+        this.player.play('walking');
+      } else {
+        this.player.animations.stop();
+        this.player.frame = 3;
       }
 
       if ((this.cursors.up.isDown ||
@@ -80,8 +120,12 @@ var GameState = {
         this.player.body.velocity.y = -this.JUMPING_SPEED;
         this.player.customParams.mustJump = false;
       }
-    },
-    landed: function(player, ground) {
+
+      this.barrels.forEach(function (element) {
+        if (element.x < 10 && element.y > 600) {
+          element.kill();
+        }
+      }, this);
     },
     createOnScreenControls: function() {
       this.leftArrow = this.add.button(20, 535, 'arrowButton');
@@ -135,6 +179,26 @@ var GameState = {
       this.rightArrow.events.onInputOut.add(function () {
         this.player.customParams.isMovingRight = false;
       }, this);
+    },
+    killPlayer: function(player, fire) {
+      game.state.start('GameState');
+    },
+    win: function(player, goal) {
+      alert('You win!');
+      game.state.start('GameState');
+    },
+    createBarrel: function() {
+      var barrel = this.barrels.getFirstExists(false);
+
+      if (!barrel) {
+        barrel = this.barrels.create(0, 0, 'barrel');
+      }
+
+      barrel.body.collideWorldBounds = true;
+      barrel.body.bounce.set(1, 0);
+
+      barrel.reset(this.levelData.goal.x, this.levelData.goal.y);
+      barrel.body.velocity.x = this.levelData.barrelSpeed;
     }
   };
   
