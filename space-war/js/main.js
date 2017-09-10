@@ -1,6 +1,6 @@
-var SpaceWar = SpaceWar || {};
+var SpaceHipster = SpaceHipster || {};
 
-SpaceWar.game = new Phaser.Game('100%', '100%', Phaser.AUTO);
+SpaceHipster.game = new Phaser.Game('100%', '100%', Phaser.AUTO);
 
-SpaceWar.game.state.add('GameState', SpaceWar.GameState);
-SpaceWar.game.state.start('GameState');    
+SpaceHipster.game.state.add('GameState', SpaceHipster.GameState);
+SpaceHipster.game.state.start('GameState');    
